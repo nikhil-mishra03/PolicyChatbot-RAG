@@ -1,0 +1,40 @@
+# Bytecode / caches
+__pycache__/
+*.py[cod]
+*.so
+*.pyd
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment + secrets
+.env
+.env.*
+!.env.example
+
+# Package managers / lock artifacts
+poetry.lock
+Pipfile
+Pipfile.lock
+uv.lock
+
+# Tool caches
+.mypy_cache/
+.pytest_cache/
+.pytype/
+coverage.*
+htmlcov/
+
+# Editors / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Build + distribution
+build/
+dist/
+*.egg-info/
