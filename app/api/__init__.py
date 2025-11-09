@@ -1,3 +1,3 @@
-from .routes import health_router, uploads_router
+from .routes import health_router, uploads_router, chat_router
 
-__all_ = []
+__all__ = ["health_router", "uploads_router", "chat_router"]

@@ -9,4 +9,11 @@ dependencies = [
     "uvicorn",
     "boto3",
     "pydantic-settings",
+    "python-multipart",
+    "pypdf",
+    "striprtf",
+    "sentence_transformers",
+    "chromadb",
+    "openai",
+    "openai.error",
 ]
