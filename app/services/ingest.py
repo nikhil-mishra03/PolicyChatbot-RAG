@@ -4,11 +4,11 @@ from app.core.logger_config import get_logger
 
 logger = get_logger(__name__)
 
-def process_document_from_s3(*, tenant_id: str, s3_key: str, settings: Settings):
+def process_document_from_s3(*, tenant_id: str, user_id: str, doc_id: str, s3_url: str, s3_key: str, settings: Settings):
     # Run fetch, parse, chunk , embed, store pipeline for a single document
     # raise NotImplementedError("Ingest pipeline is not yet implemented.")
     s3_upload_service = s3_upload.S3UploadService(settings)
-    logger.info(f"Start processing document for tenant_id: {tenant_id}, s3_key: {s3_key}")
+    logger.info(f"Start processing document for tenant_id: {tenant_id}, user_id: {user_id}, s3_key: {s3_key}")
     s3_file_info = s3_upload_service.stream_file(s3_key=s3_key)
     document_stream = s3_file_info['body']
     # logger.info(f"Download document from S3 {document_stream}")
@@ -24,7 +24,16 @@ def process_document_from_s3(*, tenant_id: str, s3_key: str, settings: Settings)
     logger.info(f"Generated {len(vector)} embeddings")
     # chroma_client = vector_store.get_chroma_client(settings=settings)
     # logger.info(f"Storing vectors in vector store")
-    vector_store.store_vectors(vectors =vector, tenant_id=tenant_id, chunks=chunks, s3_key=s3_key, settings=settings)
+    vector_store.store_vectors(
+        vectors=vector, 
+        tenant_id=tenant_id, 
+        user_id=user_id,
+        doc_id=doc_id,
+        s3_url=s3_url,
+        chunks=chunks, 
+        s3_key=s3_key, 
+        settings=settings
+    )
     logger.info(f"Completed processing document for tenant_id: {tenant_id}, s3_key: {s3_key}")
 
     # document_stream - returns document or file stream from S3

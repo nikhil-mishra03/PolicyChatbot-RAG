@@ -6,13 +6,19 @@ from openai import OpenAI
 from openai import OpenAIError as openai_error
 from app.core.logger_config import get_logger
 
+_openai_client_instance = None
+
 class GeneratorService:
     def __init__(self, settings: Settings):
         self.settings = settings
         self.logger = get_logger(__class__.__name__)
 
     def _get_openai_client(self) -> OpenAI:
-        return OpenAI(api_key=self.settings.openai_api_key)
+        global _openai_client_instance
+        if _openai_client_instance is not None:
+            return _openai_client_instance
+        _openai_client_instance = OpenAI(api_key=self.settings.openai_api_key)
+        return _openai_client_instance
 
 
     def generate_answer(self, *, question: str, retrieval_results: dict[str, Any]):

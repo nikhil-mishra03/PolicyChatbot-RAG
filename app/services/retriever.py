@@ -13,7 +13,7 @@ def retrieve_relevant_chunks(*, tenant_id: str, question: str, settings):
         logger.info(f"Generated embedding for question for tenant_id: {tenant_id}")
         # Query the vector store
         client = vector_store._get_chroma_client(settings)
-        collection = vector_store._get_collection(settings, client, collection_name=settings.chromadb_collection_name)
+        collection = vector_store._get_collection(client, collection_name=settings.chromadb_collection_name)
         logger.info(f"Querying vector store for tenant_id: {tenant_id} with question: {question}")
         results = collection.query(
             query_embeddings=question_embedding,

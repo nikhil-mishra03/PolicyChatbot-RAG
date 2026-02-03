@@ -6,9 +6,12 @@ from app.services.ingest import process_document_from_s3
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 
+from uuid import uuid4
+
 @router.post("/files")
 async def upload_policy_document(
     tenant_id: str,
+    user_id: str,
     file: UploadFile = File(...),
     settings: Settings = Depends(get_settings)
 ) -> dict[str, str]:
@@ -18,6 +21,11 @@ async def upload_policy_document(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="tenant_id is required"
         )
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="user_id is required"
+        )
 
     # ToDo : Add S3 upload logic in storage file 
     s3_upload_service = S3UploadService(settings)
@@ -26,8 +34,13 @@ async def upload_policy_document(
         url = upload_object.url
 
         s3_key = upload_object.key
+        doc_id = str(uuid4()) # Generate a unique document ID
+
         process_document_from_s3(
             tenant_id=tenant_id,
+            user_id=user_id,
+            doc_id=doc_id,
+            s3_url=url,
             s3_key=s3_key,
             settings=settings
         )
@@ -35,6 +48,8 @@ async def upload_policy_document(
 
         return JSONResponse({
             "tenant_id": tenant_id,
+            "user_id": user_id,
+            "doc_id": doc_id,
             "filename" : file.filename,
             "url": upload_object.url,
             "bucket": upload_object.bucket,
