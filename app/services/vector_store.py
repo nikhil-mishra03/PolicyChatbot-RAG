@@ -2,16 +2,14 @@ import chromadb
 from app.core.config import Settings
 from app.core.logger_config import get_logger
 from app.services.chunker import Chunk
+from app.core.globals import get_chroma_client
+
 
 logger = get_logger(__name__)
 
-_chroma_client_instance = None
 _chroma_collection_cache = {}
 
-def _get_chroma_client(settings: Settings) -> chromadb.Client:
-    global _chroma_client_instance
-    if _chroma_client_instance is not None:
-        return _chroma_client_instance
+def _create_chroma_client(settings: Settings) -> chromadb.Client:
     try:
         client = chromadb.CloudClient(
             api_key=settings.chroma_api_key,
@@ -19,7 +17,6 @@ def _get_chroma_client(settings: Settings) -> chromadb.Client:
             database=settings.chroma_database
         )
         logger.info("ChromaDB client created successfully")
-        _chroma_client_instance = client
         return client
     except Exception as e:
         raise RuntimeError(f"Failed to create ChromaDB client: {e}")
@@ -44,7 +41,7 @@ def _get_collection(client: chromadb.Client, collection_name: str) -> chromadb.a
         return collection
 
 def store_vectors(*, vectors: list[float], tenant_id: str, user_id: str, doc_id: str, s3_url: str, chunks: list[Chunk], s3_key: str, settings: Settings):
-    client = _get_chroma_client(settings)
+    client = get_chroma_client()
     collection = _get_collection(client, collection_name=settings.chromadb_collection_name)
     ids = []
     metadatas = []

@@ -9,40 +9,39 @@ logger = get_logger(__name__)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
-@router.post("/ask")
+from app.schemas.chat import ChatRequest, ChatResponse
+
+@router.post("/ask", response_model=ChatResponse)
 async def ask_question(
-        user_id: str,
-        tenant_id: str,
-        question: str
+        request: ChatRequest
 ):
-    if not tenant_id or not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="tenant_id and user_id are required"
-        )
+    user_id = request.user_id
+    tenant_id = request.tenant_id
+    question = request.question
+
     logger.info(f"Received question from user_id: {user_id} for tenant_id: {tenant_id} with question: {question}")
-    retrieved_chunks = retrieve_relevant_chunks(
+    retrieved_chunks = await retrieve_relevant_chunks(
         tenant_id = tenant_id,
         question = question,
         settings = get_settings()
     )
     generator_service = GeneratorService(settings = get_settings())
     try:
-        answer = generator_service.generate_answer(
+        answer_dict = await generator_service.generate_answer(
             question = question,
             retrieval_results = retrieved_chunks,
         )
-        return answer
-    except HTTPException as e:
-        return JSONResponse(
-            status_code=e.status_code,
-            content={"detail": e.detail}
+        return ChatResponse(
+            answer=answer_dict["answer"],
+            sources=answer_dict["sources"]
         )
+    except HTTPException as e:
+        raise e
     except Exception as e:
         logger.error(f"Error generating answer: {e}")
-        return JSONResponse(
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"detail": f"An error occurred while processing your request. Detail: {e}"}
+            detail=f"An error occurred while processing your request. Detail: {e}"
         )
 
     

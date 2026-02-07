@@ -12,8 +12,7 @@ dependencies = [
     "python-multipart",
     "pypdf",
     "striprtf",
-    "sentence_transformers",
     "chromadb",
     "openai",
-    "openai.error",
+    "flashrank>=0.2.10",
 ]

@@ -17,10 +17,19 @@ def process_document_from_s3(*, tenant_id: str, user_id: str, doc_id: str, s3_ur
     logger.info(f"Extracted raw text of length {len(raw_text)}")
     logger.info(f"Extracted text: {raw_text[:500]}...")  # Log first 500 characters
     logger.info(f"Starting text chunking")
-    chunks = chunker.split_text(raw_text)
+    from app.services.chunker import RecursiveChunker, Chunk
+    chunker_service = RecursiveChunker(chunk_size=1000, chunk_overlap=200)
+    final_text_chunks = chunker_service.split_text(raw_text)
+    
+    chunks = [
+        Chunk(id=f"chunk_{i}", text=ct.strip(), index=i)
+        for i, ct in enumerate(final_text_chunks)
+        if ct.strip()
+    ]
     logger.info(f"Created {len(chunks)} text chunks")
     logger.info(chunks[0:2])  # Log first 2 chunks
-    vector = embeddings.embed_chunks(chunks=chunks)
+    import asyncio
+    vector = asyncio.run(embeddings.embed_chunks(chunks=chunks))
     logger.info(f"Generated {len(vector)} embeddings")
     # chroma_client = vector_store.get_chroma_client(settings=settings)
     # logger.info(f"Storing vectors in vector store")
