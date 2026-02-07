@@ -1,21 +1,32 @@
-from sentence_transformers import SentenceTransformer
 from app.services.chunker import Chunk
-from functools import lru_cache
+from app.core.config import get_settings
+from app.core import globals
 
-MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-
-@lru_cache(maxsize=1)
-def _get_model():
-    model = SentenceTransformer(MODEL_NAME)
-    return model
-
-def embed_chunks(chunks: list[Chunk]) -> list[float]:
-    model = _get_model()
+async def embed_chunks(chunks: list[Chunk]) -> list[float]:
+    client = globals.get_openai_client()
+    settings = get_settings()
     texts = [chunk.text for chunk in chunks]
-    embedding = model.encode(texts)
-    return embedding
+    if not texts:
+        return []
 
-def embed_text(texts: list[str]) -> list[float]:
-    model = _get_model()
-    embedding = model.encode(texts)
-    return embedding
+    # OpenAI handles batching, but for huge lists we might want to chunk requests.
+    # For now, assuming reasonable document sizes.
+    response = await client.embeddings.create(
+        input=texts,
+        model=settings.openai_embedding_model
+    )
+    # Extract embeddings in order
+    return [data.embedding for data in response.data]
+
+async def embed_text(texts: list[str]) -> list[float]:
+    client = globals.get_openai_client()
+    settings = get_settings()
+    
+    if isinstance(texts, str):
+        texts = [texts]
+        
+    response = await client.embeddings.create(
+        input=texts,
+        model=settings.openai_embedding_model
+    )
+    return [data.embedding for data in response.data]
